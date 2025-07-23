@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/producto.dart';
 import '../services/producto_service.dart';
+import '../services/codigo_barras_service.dart';
+import '../models/producto_editable.dart';
 import '../utils/dialog_utils.dart';
 
 class InventarioScreen extends StatefulWidget {
@@ -103,7 +105,20 @@ class _InventarioScreenState extends State<InventarioScreen> {
       Navigator.of(context).pop();
       
       if (productoDetallado != null) {
-        mostrarDetalleProducto(context, productoDetallado);
+        final productoEditable = ProductoEditable(
+          id: productoDetallado.id,
+          nombre: productoDetallado.nombre,
+          precio: productoDetallado.precio,
+          iva19: productoDetallado.iva19,
+          iva30: productoDetallado.iva30,
+          codigoBarras: productoDetallado.codigoBarras,
+        );
+        await mostrarDetalleProducto(
+          context: context,
+          producto: productoEditable,
+          productoService: ProductoService(),
+          codigoBarrasService: CodigoBarrasService(),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -198,7 +213,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                     final producto = productosMostrar[index];
                     final precio = producto.precio;
                     final precioConIva = precio * (1 + (producto.iva19 / 100));
-                    final hasStock = producto.stock > 0;
+                    final hasStock = false;
 
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -241,7 +256,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  hasStock ? 'Disponible (${producto.stock})' : 'Sin stock',
+                                  hasStock ? 'Disponible' : 'Sin stock',
                                   style: TextStyle(
                                     color: hasStock ? Colors.green : Colors.red,
                                     fontWeight: FontWeight.w500,
@@ -271,7 +286,20 @@ class _InventarioScreenState extends State<InventarioScreen> {
                             if (mounted) {
                               Navigator.of(context).pop();
                               if (productoDetallado != null) {
-                                mostrarDetalleProducto(context, productoDetallado);
+final productoEditable = ProductoEditable(
+                                  id: productoDetallado.id,
+                                  nombre: productoDetallado.nombre,
+                                  precio: productoDetallado.precio,
+                                  iva19: productoDetallado.iva19,
+                                  iva30: productoDetallado.iva30,
+                                  codigoBarras: productoDetallado.codigoBarras,
+                                );
+                                await mostrarDetalleProducto(
+                                  context: context,
+                                  producto: productoEditable,
+                                  productoService: ProductoService(),
+                                  codigoBarrasService: CodigoBarrasService(),
+                                );
                               } else {
                                 _mostrarMensajeError('No se pudieron cargar los detalles del producto');
                               }

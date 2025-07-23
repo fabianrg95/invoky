@@ -1,58 +1,47 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/codigo_barras.dart';
 
 class CodigoBarrasService {
   final _supabase = Supabase.instance.client;
 
-  // Obtener todos los códigos de barras de un producto
-  Future<List<CodigoBarras>> obtenerPorProducto(String productoId) async {
+  // Obtener el código de barras de un producto
+  Future<String?> obtenerPorProducto(String productoId) async {
     final response = await _supabase
-        .from('codigo_barras')
-        .select()
-        .eq('producto_id', productoId);
+        .from('productos')
+        .select('codigo_barras')
+        .eq('id', productoId)
+        .single();
 
-    return response
-        .map<CodigoBarras>((map) => CodigoBarras.fromMap(map))
-        .toList();
+    return response['codigo_barras']?.toString();
   }
 
-  // Agregar un nuevo código de barras
-  Future<CodigoBarras> agregarCodigoBarras({
+  // Crear o actualizar el código de barras de un producto
+  Future<void> crearOActualizar({
     required String productoId,
     required String codigo,
   }) async {
-    // Verificar si el código ya existe
-    final codigoExistente = await _supabase
-        .from('codigo_barras')
-        .select()
-        .eq('codigo_barras', codigo)
-        .maybeSingle();
 
-    if (codigoExistente != null) {
-      throw Exception('El código de barras ya está en uso');
+    if (await existe(codigo)) {
+      throw Exception('El código de barras ya está en uso por otro producto');
     }
 
-    final response = await _supabase
-        .from('codigo_barras')
-        .insert({
-          'producto_id': productoId,
-          'codigo_barras': codigo,
-        })
-        .select()
-        .single();
-
-    return CodigoBarras.fromMap(response);
+    await _supabase
+        .from('productos')
+        .update({'codigo_barras': codigo})
+        .eq('id', productoId);
   }
 
-  // Eliminar un código de barras
-  Future<void> eliminarCodigoBarras(String id) async {
-    await _supabase.from('codigo_barras').delete().eq('id', id);
+  // Eliminar el código de barras de un producto
+  Future<void> eliminar(String productoId) async {
+    await _supabase
+        .from('productos')
+        .update({'codigo_barras': null})
+        .eq('id', productoId);
   }
 
   // Verificar si un código de barras ya existe
-  Future<bool> existeCodigo(String codigo) async {
+  Future<bool> existe(String codigo) async {
     final response = await _supabase
-        .from('codigo_barras')
+        .from('productos')
         .select('id')
         .eq('codigo_barras', codigo)
         .maybeSingle();

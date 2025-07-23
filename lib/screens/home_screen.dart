@@ -26,8 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case MenuOption.reportes:
         return const ReportesScreen();
       case MenuOption.inicio:
-      default:
-        return const SizedBox.shrink(); // Vista en blanco
+      return const SizedBox.shrink(); // Vista en blanco
     }
   }
 

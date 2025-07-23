@@ -50,7 +50,7 @@ Future<void> mostrarDetalleProducto({
   // final iva19Controller = TextEditingController(text: producto.iva19.toStringAsFixed(2));
   // final iva30Controller = TextEditingController(text: producto.iva30.toStringAsFixed(2));
   // final formKey = GlobalKey<FormState>();
-  
+
   // Cargar el código de barras actual si existe
   if (producto.codigoBarras == null) {
     try {
@@ -99,18 +99,14 @@ Future<void> mostrarDetalleProducto({
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(Icons.qr_code),
-                          title: Text(
-                            producto.codigoBarras!,
-                            style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
-                          ),
+                          title: Text(producto.codigoBarras!, style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit, size: 20),
                                 onPressed: () async {
-                                  final codigoController = TextEditingController(
-                                    text: producto.codigoBarras ?? '');
+                                  final codigoController = TextEditingController(text: producto.codigoBarras ?? '');
                                   final formKey = GlobalKey<FormState>();
                                   bool isProcessing = false;
 
@@ -141,9 +137,7 @@ Future<void> mostrarDetalleProducto({
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: isProcessing
-                                                  ? null
-                                                  : () => Navigator.pop(context, false),
+                                              onPressed: isProcessing ? null : () => Navigator.pop(context, false),
                                               child: const Text('Cancelar'),
                                             ),
                                             TextButton(
@@ -162,23 +156,16 @@ Future<void> mostrarDetalleProducto({
                                                           }
                                                         } catch (e) {
                                                           if (context.mounted) {
-                                                            ScaffoldMessenger.of(context).showSnackBar(
-                                                              SnackBar(
-                                                                content: Text(e.toString()),
-                                                                backgroundColor: Colors.red,
-                                                              ),
-                                                            );
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                                                           }
                                                           setState(() => isProcessing = false);
                                                         }
                                                       }
                                                     },
                                               child: isProcessing
-                                                  ? const SizedBox(
-                                                      width: 20,
-                                                      height: 20,
-                                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                                    )
+                                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                                                   : const Text('Guardar'),
                                             ),
                                           ],
@@ -191,24 +178,18 @@ Future<void> mostrarDetalleProducto({
                                     try {
                                       // Actualizar el producto localmente
                                       producto.actualizarCodigoBarras(codigoController.text);
-                                      
+
                                       // Mostrar mensaje de éxito
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Código de barras actualizado correctamente'),
-                                            backgroundColor: Colors.green,
-                                          ),
+                                          const SnackBar(content: Text('Código de barras actualizado correctamente'), backgroundColor: Colors.green),
                                         );
                                       }
                                     } catch (e) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error al actualizar: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e'), backgroundColor: Colors.red));
                                       }
                                     }
                                   }
@@ -247,15 +228,31 @@ Future<void> mostrarDetalleProducto({
                                           }
                                           return null;
                                         },
+                                        onFieldSubmitted: (value) async {
+                                                  if (formKey.currentState!.validate()) {
+                                                    setState(() => isProcessing = true);
+                                                    try {
+                                                      await codigoBarrasService.crearOActualizar(
+                                                        productoId: producto.id,
+                                                        codigo: codigoController.text,
+                                                      );
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context, true);
+                                                      }
+                                                    } catch (e) {
+                                                      if (context.mounted) {
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                                      }
+                                                      setState(() => isProcessing = false);
+                                                    }
+                                                  }
+                                        },
                                       ),
                                     ),
                                     actions: [
-                                      TextButton(
-                                        onPressed: isProcessing
-                                            ? null
-                                            : () => Navigator.pop(context, false),
-                                        child: const Text('Cancelar'),
-                                      ),
+                                      TextButton(onPressed: isProcessing ? null : () => Navigator.pop(context, false), child: const Text('Cancelar')),
                                       TextButton(
                                         onPressed: isProcessing
                                             ? null
@@ -272,23 +269,16 @@ Future<void> mostrarDetalleProducto({
                                                     }
                                                   } catch (e) {
                                                     if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(e.toString()),
-                                                          backgroundColor: Colors.red,
-                                                        ),
-                                                      );
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                                                     }
                                                     setState(() => isProcessing = false);
                                                   }
                                                 }
                                               },
                                         child: isProcessing
-                                            ? const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child: CircularProgressIndicator(strokeWidth: 2),
-                                              )
+                                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                                             : const Text('Agregar'),
                                       ),
                                     ],
@@ -301,24 +291,18 @@ Future<void> mostrarDetalleProducto({
                               try {
                                 // Actualizar el producto localmente
                                 producto.actualizarCodigoBarras(codigoController.text);
-                                
+
                                 // Mostrar mensaje de éxito
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Código de barras agregado correctamente'),
-                                      backgroundColor: Colors.green,
-                                    ),
+                                    const SnackBar(content: Text('Código de barras agregado correctamente'), backgroundColor: Colors.green),
                                   );
                                 }
                               } catch (e) {
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error al actualizar: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e'), backgroundColor: Colors.red));
                                 }
                               }
                             }
@@ -339,8 +323,6 @@ Future<void> mostrarDetalleProducto({
     ),
   );
 }
-
-
 
 Widget _buildInfoRow(String label, String value, {bool isBold = false, Color? color}) {
   return Padding(

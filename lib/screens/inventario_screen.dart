@@ -104,23 +104,21 @@ class _InventarioScreenState extends State<InventarioScreen> {
       // Cerrar el diálogo de carga
       Navigator.of(context).pop();
       
-      if (productoDetallado != null) {
-        final productoEditable = ProductoEditable(
-          id: productoDetallado.id,
-          nombre: productoDetallado.nombre,
-          precio: productoDetallado.precio,
-          iva19: productoDetallado.iva19,
-          iva30: productoDetallado.iva30,
-          codigoBarras: productoDetallado.codigoBarras,
-        );
-        await mostrarDetalleProducto(
-          context: context,
-          producto: productoEditable,
-          productoService: ProductoService(),
-          codigoBarrasService: CodigoBarrasService(),
-        );
-      }
-    } catch (e) {
+      final productoEditable = ProductoEditable(
+        id: productoDetallado.id,
+        nombre: productoDetallado.nombre,
+        precio: productoDetallado.precio,
+        iva19: productoDetallado.iva19,
+        iva30: productoDetallado.iva30,
+        codigoBarras: productoDetallado.codigoBarras,
+      );
+      await mostrarDetalleProducto(
+        context: context,
+        producto: productoEditable,
+        productoService: ProductoService(),
+        codigoBarrasService: CodigoBarrasService(),
+      );
+        } catch (e) {
       if (mounted) {
         // Cerrar cualquier diálogo de carga abierto
         Navigator.of(context, rootNavigator: true).pop();
@@ -212,7 +210,6 @@ class _InventarioScreenState extends State<InventarioScreen> {
                   itemBuilder: (context, index) {
                     final producto = productosMostrar[index];
                     final precio = producto.precio;
-                    final precioConIva = precio * (1 + (producto.iva19 / 100));
                     final hasStock = false;
 
                     return Card(
@@ -285,25 +282,21 @@ class _InventarioScreenState extends State<InventarioScreen> {
                             // Cerrar el diálogo de carga
                             if (mounted) {
                               Navigator.of(context).pop();
-                              if (productoDetallado != null) {
-final productoEditable = ProductoEditable(
-                                  id: productoDetallado.id,
-                                  nombre: productoDetallado.nombre,
-                                  precio: productoDetallado.precio,
-                                  iva19: productoDetallado.iva19,
-                                  iva30: productoDetallado.iva30,
-                                  codigoBarras: productoDetallado.codigoBarras,
-                                );
-                                await mostrarDetalleProducto(
-                                  context: context,
-                                  producto: productoEditable,
-                                  productoService: ProductoService(),
-                                  codigoBarrasService: CodigoBarrasService(),
-                                );
-                              } else {
-                                _mostrarMensajeError('No se pudieron cargar los detalles del producto');
-                              }
-                            }
+                              final productoEditable = ProductoEditable(
+                                id: productoDetallado.id,
+                                nombre: productoDetallado.nombre,
+                                precio: productoDetallado.precio,
+                                iva19: productoDetallado.iva19,
+                                iva30: productoDetallado.iva30,
+                                codigoBarras: productoDetallado.codigoBarras,
+                              );
+                              await mostrarDetalleProducto(
+                                context: context,
+                                producto: productoEditable,
+                                productoService: ProductoService(),
+                                codigoBarrasService: CodigoBarrasService(),
+                              );
+                                                        }
                           } catch (e) {
                             // Cerrar el diálogo de carga en caso de error
                             if (mounted) {

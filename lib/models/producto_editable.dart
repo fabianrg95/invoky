@@ -9,6 +9,7 @@ class ProductoEditable with ChangeNotifier {
   double iva19;
   double iva30;
   String? codigoBarras;
+  int stock;
   
   ProductoEditable({
     required this.id,
@@ -17,6 +18,7 @@ class ProductoEditable with ChangeNotifier {
     this.iva19 = 0.0,
     this.iva30 = 0.0,
     this.codigoBarras,
+    required this.stock,
   });
   
   // Constructor de copia
@@ -28,6 +30,7 @@ class ProductoEditable with ChangeNotifier {
       iva19: producto.iva19,
       iva30: producto.iva30,
       codigoBarras: producto.codigoBarras,
+      stock: producto.stock,
     );
   }
   

@@ -5,6 +5,7 @@ class Producto {
   final double iva19;
   final double iva30;
   final String? codigoBarras;
+  final int stock;
 
   Producto({
     required this.id, 
@@ -13,9 +14,10 @@ class Producto {
     this.iva19 = 0.0,
     this.iva30 = 0.0,
     this.codigoBarras,
+    required this.stock,
   });
 
-  factory Producto.fromMap(Map<String, dynamic> map) {
+  factory Producto.fromMap(Map<String, dynamic> map, {int stock = 0}) {
     return Producto(
       id: map['id'].toString(), 
       nombre: map['nombre'] as String, 
@@ -24,6 +26,15 @@ class Producto {
       iva19: (map['iva_19'] as num?)?.toDouble() ?? 0.0,
       iva30: (map['iva_30'] as num?)?.toDouble() ?? 0.0,
       codigoBarras: map['codigo_barras']?.toString(),
+      stock: stock,
     );
+  }
+
+  double calcularIva19(int cantidad){
+    return cantidad * 0.19;
+  }
+
+  double calcularIva30(int cantidad){
+    return cantidad * 0.30;
   }
 }

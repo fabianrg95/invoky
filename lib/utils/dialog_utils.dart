@@ -86,7 +86,7 @@ Future<void> mostrarDetalleProducto({
                   _buildInfoRow('IVA 30%:', '\$${producto.iva30.toStringAsFixed(2)}'),
 
                   const Divider(),
-                  _buildInfoRow('Stock disponible:', '0 unidades', color: Colors.blue),
+                  _buildInfoRow('Stock disponible:', '${producto.stock} unidad(es)', color: Colors.blue),
 
                   // Sección de código de barras
                   const SizedBox(height: 16),

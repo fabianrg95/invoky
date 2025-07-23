@@ -31,20 +31,22 @@ class AppTheme {
       
       // Campos de entrada
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade700),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade700),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade900,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        labelStyle: const TextStyle(color: Colors.grey),
-        hintStyle: TextStyle(color: Colors.grey.shade600),
-      ),
+                        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade900,
+                      ),
       
       // Botones elevados
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -78,6 +80,7 @@ class AppTheme {
       drawerTheme: const DrawerThemeData(
         backgroundColor: Color(0xFF1E1E1E),
       ),
+      
     );
   }
 }

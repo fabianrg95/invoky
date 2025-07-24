@@ -41,19 +41,7 @@ class InventarioService {
         return Inventario.fromJson(response);
       } else {
         // Si el producto ya existe, actualizamos el inventario
-        final response = await _supabase.rpc('incrementar_stock', params: {
-          'p_producto_id': productoId,
-          'p_cantidad': cantidad,
-        });
-
-        // Si no se pudo actualizar (puede que no exista el registro), lo creamos
-        if (response == null) {
-          return await actualizarInventario(
-            productoId: productoId,
-            cantidad: cantidad,
-            esNuevo: true,
-          );
-        }
+        final response = await _supabase.from('inventario').update({'stock': cantidad}).eq('producto_id', productoId).select().single();
 
         return Inventario.fromJson(response);
       }

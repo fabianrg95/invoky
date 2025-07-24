@@ -42,6 +42,7 @@ Future<void> mostrarDetalleProducto({
   required ProductoEditable producto,
   required ProductoService productoService,
   required CodigoBarrasService codigoBarrasService,
+  required VoidCallback onStockActualizado,
 }) async {
   // Controllers para los campos del formulario
   // Controllers para el formulario (comentados hasta que se implemente el formulario)
@@ -71,164 +72,316 @@ Future<void> mostrarDetalleProducto({
         builder: (context, producto, _) {
           return AlertDialog(
             title: Text(producto.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Sección de precios
-                  _buildInfoRow('Precio base:', '\$${producto.precio.toStringAsFixed(2)}'),
-                  const Divider(),
-
-                  _buildInfoRow('IVA 19%:', '\$${producto.iva19.toStringAsFixed(2)}'),
-
-                  const SizedBox(height: 8),
-                  _buildInfoRow('IVA 30%:', '\$${producto.iva30.toStringAsFixed(2)}'),
-
-                  const Divider(),
-                  _buildInfoRow('Stock disponible:', '${producto.stock} unidad(es)', color: Colors.blue),
-
-                  // Sección de código de barras
-                  const SizedBox(height: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Código de barras:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 8),
-                      if (producto.codigoBarras != null && producto.codigoBarras!.isNotEmpty) ...[
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.qr_code),
-                          title: Text(producto.codigoBarras!, style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 20),
-                                onPressed: () async {
-                                  final codigoController = TextEditingController(text: producto.codigoBarras ?? '');
-                                  final formKey = GlobalKey<FormState>();
-                                  bool isProcessing = false;
-
-                                  final result = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => StatefulBuilder(
-                                      builder: (context, setState) {
-                                        return AlertDialog(
-                                          title: const Text('Editar código de barras'),
-                                          content: Form(
-                                            key: formKey,
-                                            child: TextFormField(
-                                              controller: codigoController,
-                                              autofocus: true,
-                                              decoration: const InputDecoration(
-                                                labelText: 'Código de barras',
-                                                border: OutlineInputBorder(),
-                                                hintText: 'Escanee el código de barras',
-                                              ),
-                                              keyboardType: TextInputType.number,
-                                              validator: (value) {
-                                                if (value == null || value.isEmpty) {
-                                                  return 'Por favor ingrese un código';
-                                                }
-                                                return null;
-                                              },
+            content: SizedBox(
+              width: 500,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Sección de precios
+                    _buildInfoRow('Precio base:', '\$${producto.precio.toStringAsFixed(2)}'),
+                    const Divider(),
+              
+                    _buildInfoRow('IVA 19%:', '\$${producto.iva19.toStringAsFixed(2)}'),
+              
+                    const SizedBox(height: 8),
+                    _buildInfoRow('IVA 30%:', '\$${producto.iva30.toStringAsFixed(2)}'),
+              
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Stock disponible:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                        Row(
+                          children: [
+                            Text(
+                              '${producto.stock} unidad(es)',
+                              style: const TextStyle(color: Colors.blue),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () async {
+                                final cantidadController = TextEditingController(text: producto.stock.toString());
+                                final formKey = GlobalKey<FormState>();
+                                bool isProcessing = false;
+              
+                                final result = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => StatefulBuilder(
+                                    builder: (context, setState) {
+                                      return AlertDialog(
+                                        title: const Text('Actualizar stock'),
+                                        content: Form(
+                                          key: formKey,
+                                          child: TextFormField(
+                                            controller: cantidadController,
+                                            autofocus: true,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Cantidad en stock',
+                                              border: OutlineInputBorder(),
+                                              hintText: 'Ingrese la cantidad',
                                             ),
+                                            keyboardType: TextInputType.number,
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Por favor ingrese una cantidad';
+                                              }
+                                              final cantidad = int.tryParse(value);
+                                              if (cantidad == null || cantidad < 0) {
+                                                return 'Ingrese un número válido';
+                                              }
+                                              return null;
+                                            },
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: isProcessing ? null : () => Navigator.pop(context, false),
-                                              child: const Text('Cancelar'),
-                                            ),
-                                            TextButton(
-                                              onPressed: isProcessing
-                                                  ? null
-                                                  : () async {
-                                                      if (formKey.currentState!.validate()) {
-                                                        setState(() => isProcessing = true);
-                                                        try {
-                                                          await codigoBarrasService.crearOActualizar(
-                                                            productoId: producto.id,
-                                                            codigo: codigoController.text,
-                                                          );
-                                                          if (context.mounted) {
-                                                            Navigator.pop(context, true);
-                                                          }
-                                                        } catch (e) {
-                                                          if (context.mounted) {
-                                                            ScaffoldMessenger.of(
-                                                              context,
-                                                            ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-                                                          }
-                                                          setState(() => isProcessing = false);
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: isProcessing ? null : () => Navigator.pop(context, false),
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          TextButton(
+                                            onPressed: isProcessing
+                                                ? null
+                                                : () async {
+                                                    if (formKey.currentState!.validate()) {
+                                                      setState(() => isProcessing = true);
+                                                      try {
+                                                        final nuevaCantidad = int.parse(cantidadController.text);
+                                                        await productoService.actualizarStock(
+                                                          productoId: producto.id,
+                                                          cantidad: nuevaCantidad,
+                                                        );
+                                                        if (context.mounted) {
+                                                          producto.actualizarStock(nuevaCantidad);
+                                                          onStockActualizado();
+
+                                                          Navigator.pop(context, true);
                                                         }
+                                                      } catch (e) {
+                                                        if (context.mounted) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                                          );
+                                                        }
+                                                        setState(() => isProcessing = false);
                                                       }
-                                                    },
-                                              child: isProcessing
-                                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                                  : const Text('Guardar'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  );
-
-                                  if (result == true && context.mounted) {
-                                    try {
-                                      // Actualizar el producto localmente
-                                      producto.actualizarCodigoBarras(codigoController.text);
-
-                                      // Mostrar mensaje de éxito
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Código de barras actualizado correctamente'), backgroundColor: Colors.green),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e'), backgroundColor: Colors.red));
-                                      }
+                                                    }
+                                                  },
+                                            child: isProcessing
+                                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                                : const Text('Actualizar'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                );
+              
+                                if (result == true && context.mounted) {
+                                  try {
+                                    // Actualizar el producto localmente
+                                    producto.actualizarStock(int.parse(cantidadController.text));
+                                    // Notificar que el stock fue actualizado
+                                    onStockActualizado();
+                                    // Actualizar la UI
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Stock actualizado correctamente'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error al actualizar el stock: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
                                     }
                                   }
-                                },
-                              ),
-                            ],
-                          ),
+                                }
+                              },
+                            ),
+                          ],
                         ),
-                      ] else ...[
-                        TextButton.icon(
-                          onPressed: () async {
-                            final codigoController = TextEditingController();
-                            final formKey = GlobalKey<FormState>();
-                            bool isProcessing = false;
-
-                            final result = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => StatefulBuilder(
-                                builder: (context, setState) {
-                                  return AlertDialog(
-                                    title: const Text('Agregar código de barras'),
-                                    content: Form(
-                                      key: formKey,
-                                      child: TextFormField(
-                                        controller: codigoController,
-                                        autofocus: true,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Código de barras',
-                                          border: OutlineInputBorder(),
-                                          hintText: 'Escanee el código de barras',
-                                        ),
-                                        keyboardType: TextInputType.number,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Por favor ingrese un código';
-                                          }
-                                          return null;
+                      ],
+                    ),
+              
+                    // Sección de código de barras
+                    const SizedBox(height: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Código de barras:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        if (producto.codigoBarras != null && producto.codigoBarras!.isNotEmpty) ...[
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.qr_code),
+                            title: Text(producto.codigoBarras!, style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 20),
+                                  onPressed: () async {
+                                    final codigoController = TextEditingController(text: producto.codigoBarras ?? '');
+                                    final formKey = GlobalKey<FormState>();
+                                    bool isProcessing = false;
+              
+                                    final result = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => StatefulBuilder(
+                                        builder: (context, setState) {
+                                          return AlertDialog(
+                                            title: const Text('Editar código de barras'),
+                                            content: Form(
+                                              key: formKey,
+                                              child: TextFormField(
+                                                controller: codigoController,
+                                                autofocus: true,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Código de barras',
+                                                  border: OutlineInputBorder(),
+                                                  hintText: 'Escanee el código de barras',
+                                                ),
+                                                keyboardType: TextInputType.number,
+                                                validator: (value) {
+                                                  if (value == null || value.isEmpty) {
+                                                    return 'Por favor ingrese un código';
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: isProcessing ? null : () => Navigator.pop(context, false),
+                                                child: const Text('Cancelar'),
+                                              ),
+                                              TextButton(
+                                                onPressed: isProcessing
+                                                    ? null
+                                                    : () async {
+                                                        if (formKey.currentState!.validate()) {
+                                                          setState(() => isProcessing = true);
+                                                          try {
+                                                            await codigoBarrasService.crearOActualizar(
+                                                              productoId: producto.id,
+                                                              codigo: codigoController.text,
+                                                            );
+                                                            if (context.mounted) {
+                                                              Navigator.pop(context, true);
+                                                            }
+                                                          } catch (e) {
+                                                            if (context.mounted) {
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                                            }
+                                                            setState(() => isProcessing = false);
+                                                          }
+                                                        }
+                                                      },
+                                                child: isProcessing
+                                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                                    : const Text('Guardar'),
+                                              ),
+                                            ],
+                                          );
                                         },
-                                        onFieldSubmitted: (value) async {
+                                      ),
+                                    );
+              
+                                    if (result == true && context.mounted) {
+                                      try {
+                                        // Actualizar el producto localmente
+                                        producto.actualizarCodigoBarras(codigoController.text);
+              
+                                        // Mostrar mensaje de éxito
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Código de barras actualizado correctamente'), backgroundColor: Colors.green),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e'), backgroundColor: Colors.red));
+                                        }
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          TextButton.icon(
+                            onPressed: () async {
+                              final codigoController = TextEditingController();
+                              final formKey = GlobalKey<FormState>();
+                              bool isProcessing = false;
+              
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return AlertDialog(
+                                      title: const Text('Agregar código de barras'),
+                                      content: Form(
+                                        key: formKey,
+                                        child: TextFormField(
+                                          controller: codigoController,
+                                          autofocus: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Código de barras',
+                                            border: OutlineInputBorder(),
+                                            hintText: 'Escanee el código de barras',
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                          validator: (value) {
+                                            if (value == null || value.isEmpty) {
+                                              return 'Por favor ingrese un código';
+                                            }
+                                            return null;
+                                          },
+                                          onFieldSubmitted: (value) async {
+                                                    if (formKey.currentState!.validate()) {
+                                                      setState(() => isProcessing = true);
+                                                      try {
+                                                        await codigoBarrasService.crearOActualizar(
+                                                          productoId: producto.id,
+                                                          codigo: codigoController.text,
+                                                        );
+                                                        if (context.mounted) {
+                                                          Navigator.pop(context, true);
+                                                        }
+                                                      } catch (e) {
+                                                        if (context.mounted) {
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                                        }
+                                                        setState(() => isProcessing = false);
+                                                      }
+                                                    }
+                                          },
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(onPressed: isProcessing ? null : () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                                        TextButton(
+                                          onPressed: isProcessing
+                                              ? null
+                                              : () async {
                                                   if (formKey.currentState!.validate()) {
                                                     setState(() => isProcessing = true);
                                                     try {
@@ -248,72 +401,45 @@ Future<void> mostrarDetalleProducto({
                                                       setState(() => isProcessing = false);
                                                     }
                                                   }
-                                        },
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(onPressed: isProcessing ? null : () => Navigator.pop(context, false), child: const Text('Cancelar')),
-                                      TextButton(
-                                        onPressed: isProcessing
-                                            ? null
-                                            : () async {
-                                                if (formKey.currentState!.validate()) {
-                                                  setState(() => isProcessing = true);
-                                                  try {
-                                                    await codigoBarrasService.crearOActualizar(
-                                                      productoId: producto.id,
-                                                      codigo: codigoController.text,
-                                                    );
-                                                    if (context.mounted) {
-                                                      Navigator.pop(context, true);
-                                                    }
-                                                  } catch (e) {
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-                                                    }
-                                                    setState(() => isProcessing = false);
-                                                  }
-                                                }
-                                              },
-                                        child: isProcessing
-                                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                            : const Text('Agregar'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            );
-
-                            if (result == true && context.mounted) {
-                              try {
-                                // Actualizar el producto localmente
-                                producto.actualizarCodigoBarras(codigoController.text);
-
-                                // Mostrar mensaje de éxito
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Código de barras agregado correctamente'), backgroundColor: Colors.green),
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e'), backgroundColor: Colors.red));
+                                                },
+                                          child: isProcessing
+                                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                              : const Text('Agregar'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              );
+              
+                              if (result == true && context.mounted) {
+                                try {
+                                  // Actualizar el producto localmente
+                                  producto.actualizarCodigoBarras(codigoController.text);
+              
+                                  // Mostrar mensaje de éxito
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Código de barras agregado correctamente'), backgroundColor: Colors.green),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e'), backgroundColor: Colors.red));
+                                  }
                                 }
                               }
-                            }
-                          },
-                          icon: const Icon(Icons.add, size: 20),
-                          label: const Text('Agregar código de barras'),
-                        ),
+                            },
+                            icon: const Icon(Icons.add, size: 20),
+                            label: const Text('Agregar código de barras'),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],

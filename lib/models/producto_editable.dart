@@ -42,5 +42,10 @@ class ProductoEditable with ChangeNotifier {
     notifyListeners();
   }
   
+  // Actualizar stock
+  void actualizarStock(int nuevaCantidad) {
+    stock = nuevaCantidad;
+    notifyListeners();
+  }
 
 }

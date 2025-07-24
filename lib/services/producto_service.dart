@@ -46,6 +46,16 @@ class ProductoService {
     return Producto.fromMap(productoResponse, stock: stock['stock']);
   }
 
+  Future<void> actualizarStock({
+    required String productoId,
+    required int cantidad,
+  }) async {
+    await _supabase
+        .from('inventario')
+        .update({'stock': cantidad})
+        .eq('producto_id', productoId);
+  }
+
   Future<Producto?> obtenerProductoPorCodigo(String codigo) async {
     try {
       // Primero buscamos el código de barras para obtener el ID del producto
@@ -68,6 +78,9 @@ class ProductoService {
     required String codigoBarras,
     required double valorCompra,
     required double valorVenta,
+    required double iva19,
+    required double iva30,
+    required double precioRecomendadoVenta,
   }) async {
     try {
       // Verificar si el producto ya existe
@@ -87,9 +100,12 @@ class ProductoService {
           .insert({
             'nombre': nombre,
             'codigo_barras': codigoBarras,
-            'precio_compra': valorCompra,
-            'precio_venta': valorVenta,
-            'fecha_creacion': DateTime.now().toIso8601String(),
+            'precio_compra_unidad': valorCompra,
+            'precio_venta': valorVenta.toInt(),
+            'iva_19': iva19,
+            'iva_30': iva30,
+            'precio_recomendado': precioRecomendadoVenta,
+            'margen_ganancia': valorVenta - valorCompra,
           })
           .select()
           .single();

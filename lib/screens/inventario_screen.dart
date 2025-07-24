@@ -110,6 +110,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
         producto: productoEditable,
         productoService: ProductoService(),
         codigoBarrasService: CodigoBarrasService(),
+        onStockActualizado: _cargarProductos,
       );
     } catch (e) {
       if (mounted) {
@@ -154,6 +155,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
     bool ivaIncluido = false;
     double iva19 = 0.0;
     double iva30 = 0.0;
+    double precioRecomendadoVenta = 0.0;
     final productoService = ProductoService();
     final inventarioService = InventarioService();
 
@@ -209,6 +211,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                   } else {
                                     valorVentaController.text = (valor + iva19 + iva30).toStringAsFixed(2);
                                   }
+                                  precioRecomendadoVenta = valorVentaController.text.isEmpty ? 0.0 : double.parse(valorVentaController.text);
                                 });
                               }
                             },
@@ -235,6 +238,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                       } else {
                                         valorVentaController.text = (valor + iva19 + iva30).toStringAsFixed(2);
                                       }
+                                      precioRecomendadoVenta = valorVentaController.text.isEmpty ? 0.0 : double.parse(valorVentaController.text);
                                     }
                                   });
                                 },
@@ -249,7 +253,6 @@ class _InventarioScreenState extends State<InventarioScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
@@ -276,11 +279,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                               _buildInfoRow('IVA 19%', '\$${iva19.toStringAsFixed(2)}', isHighlighted: true),
                               _buildInfoRow('IVA 30%', '\$${iva30.toStringAsFixed(2)}', isHighlighted: true),
                               const Divider(height: 20, thickness: 1),
-                              _buildInfoRow(
-                                'Total',
-                                '\$${valorVentaController.text.isEmpty ? '0.00' : valorVentaController.text}',
-                                isTotal: true,
-                              ),
+                              _buildInfoRow('Total', '\$${valorVentaController.text.isEmpty ? '0.00' : valorVentaController.text}', isTotal: true),
                             ],
                           ),
                         ),
@@ -366,17 +365,18 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                             codigoBarras: codigoBarrasController.text,
                                             valorCompra: double.tryParse(valorCompraController.text) ?? 0.0,
                                             valorVenta: double.tryParse(valorVentaController.text) ?? 0.0,
+                                            iva19: iva19,
+                                            iva30: iva30,
+                                            precioRecomendadoVenta: precioRecomendadoVenta,
                                           );
 
                                           // Actualizar el inventario
                                           final cantidad = int.tryParse(cantidadStockController.text) ?? 0;
-                                          if (cantidad > 0) {
-                                            await inventarioService.actualizarInventario(
-                                              productoId: productoGuardado['id'],
-                                              cantidad: cantidad,
-                                              esNuevo: true,
-                                            );
-                                          }
+                                          await inventarioService.actualizarInventario(
+                                            productoId: productoGuardado['id'],
+                                            cantidad: cantidad,
+                                            esNuevo: true,
+                                          );
 
                                           // Cerrar el modal y mostrar mensaje de éxito
                                           if (mounted) {
@@ -550,8 +550,8 @@ class _InventarioScreenState extends State<InventarioScreen> {
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                               leading: CircleAvatar(
-                                backgroundColor: hasStock ? Colors.green[100] : Colors.grey[200],
-                                child: Icon(hasStock ? Icons.inventory_2 : Icons.inventory_outlined, color: hasStock ? Colors.green : Colors.grey),
+                                backgroundColor: hasStock ? Colors.green[100] : Colors.red[200],
+                                child: Icon(hasStock ? Icons.inventory_2 : Icons.inventory_outlined, color: hasStock ? Colors.green : Colors.red),
                               ),
                               title: Text(producto.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               subtitle: Column(
@@ -606,6 +606,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                       producto: productoEditable,
                                       productoService: ProductoService(),
                                       codigoBarrasService: CodigoBarrasService(),
+                                      onStockActualizado: _cargarProductos,
                                     );
                                   }
                                 } catch (e) {

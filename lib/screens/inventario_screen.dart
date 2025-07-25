@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:inventario_tienda/models/producto_editable.dart';
 import '../models/producto.dart';
 import '../services/producto_service.dart';
@@ -19,6 +18,40 @@ class _InventarioScreenState extends State<InventarioScreen> {
   late Future<List<Producto>> _productosFuture;
   final ProductoService _productoService = ProductoService();
   String _filtroNombre = '';
+  double? _precioMinimo;
+  double? _precioMaximo;
+  String _filtroStock = 'todos'; // 'todos', 'con_stock', 'sin_stock'
+
+  Widget _buildStockFilterChip(BuildContext context, String value, String label) {
+    final isSelected = _filtroStock == value;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 2.0),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (selected) {
+          if (selected) {
+            setState(() {
+              _filtroStock = value;
+            });
+          }
+        },
+        selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+        backgroundColor: Theme.of(context).cardColor,
+        labelStyle: TextStyle(
+          color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodyMedium?.color,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+          side: BorderSide(
+            color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).dividerColor,
+            width: 1,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -471,7 +504,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
   @override
   Widget build(BuildContext context) {
     return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{LogicalKeySet(LogicalKeyboardKey.keyB): const ActivateIntent()},
+      shortcuts: <LogicalKeySet, Intent>{LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyB): const ActivateIntent()},
       child: Actions(
         actions: <Type, Action<Intent>>{
           ActivateIntent: CallbackAction<ActivateIntent>(
@@ -515,19 +548,40 @@ class _InventarioScreenState extends State<InventarioScreen> {
                 }
 
                 final productos = snapshot.data!;
-                final productosMostrar = _filtroNombre.isEmpty
-                    ? productos
-                    : productos.where((p) => p.nombre.toLowerCase().contains(_filtroNombre.toLowerCase())).toList();
+                
+                // Aplicar todos los filtros
+                var productosFiltrados = productos.where((p) {
+                  // Filtro por nombre
+                  final cumpleNombre = _filtroNombre.isEmpty || 
+                      p.nombre.toLowerCase().contains(_filtroNombre.toLowerCase());
+                  
+                  // Filtro por rango de precios
+                  final cumplePrecio = (_precioMinimo == null || p.precio >= _precioMinimo!) &&
+                      (_precioMaximo == null || p.precio <= _precioMaximo!);
+                  
+                  // Filtro por stock
+                  bool cumpleStock = true;
+                  if (_filtroStock == 'con_stock') {
+                    cumpleStock = p.stock > 0;
+                  } else if (_filtroStock == 'sin_stock') {
+                    cumpleStock = p.stock <= 0;
+                  }
+                  
+                  return cumpleNombre && cumplePrecio && cumpleStock;
+                }).toList();
 
                 return Column(
                   children: [
+                    // Filtro por nombre
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: 'Filtrar por nombre',
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: 'Buscar por nombre',
+                          prefixIcon: const Icon(Icons.search),
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Theme.of(context).cardColor,
                         ),
                         onChanged: (value) {
                           setState(() {
@@ -536,11 +590,133 @@ class _InventarioScreenState extends State<InventarioScreen> {
                         },
                       ),
                     ),
+                    
+                    // Filtros de precio y stock
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Precio Mín',
+                                border: const OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Theme.of(context).cardColor,
+                                prefixText: '\$',
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                setState(() {
+                                  _precioMinimo = double.tryParse(value);
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Precio Máx',
+                                border: const OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Theme.of(context).cardColor,
+                                prefixText: '\$',
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                setState(() {
+                                  _precioMaximo = double.tryParse(value);
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildStockFilterChip(context, 'todos', 'Todos'),
+                                _buildStockFilterChip(context, 'con_stock', 'Con stock'),
+                                _buildStockFilterChip(context, 'sin_stock', 'Sin stock'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Contador de resultados
+                    if (_filtroNombre.isNotEmpty || _precioMinimo != null || _precioMaximo != null || _filtroStock != 'todos')
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              '${productosFiltrados.length} ${productosFiltrados.length == 1 ? 'producto encontrado' : 'productos encontrados'}' ,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _filtroNombre = '';
+                                  _precioMinimo = null;
+                                  _precioMaximo = null;
+                                  _filtroStock = 'todos';
+                                });
+                              },
+                              child: const Text('Limpiar filtros'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 8),
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: productosMostrar.length,
+                      child: productosFiltrados.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off,
+                                    size: 64,
+                                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No se encontraron productos',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: Theme.of(context).textTheme.bodySmall?.color,
+                                    ),
+                                  ),
+                                  if (_filtroNombre.isNotEmpty || _precioMinimo != null || _precioMaximo != null || _filtroStock != 'todos')
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _filtroNombre = '';
+                                          _precioMinimo = null;
+                                          _precioMaximo = null;
+                                          _filtroStock = 'todos';
+                                        });
+                                      },
+                                      child: const Text('Limpiar filtros'),
+                                    ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: productosFiltrados.length,
                         itemBuilder: (context, index) {
-                          final producto = productosMostrar[index];
+                          final producto = productosFiltrados[index];
                           final precio = producto.precio;
                           final hasStock = producto.stock > 0;
 

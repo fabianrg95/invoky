@@ -83,22 +83,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
     return Scaffold(
       backgroundColor: AppTheme.cosmicBackground,
-      appBar: AppBar(
-        title: Text(
-          'La casa de los papelitos',
-          style: theme.textTheme.titleLarge,
-        ),
-        backgroundColor: AppTheme.cosmicSurface,
-        elevation: 0,
-      ),
       body: Container(
         color: AppTheme.cosmicBackground,
         child: Row(
@@ -136,6 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             radius: 36,
                             backgroundColor: Colors.black26,
                             backgroundImage: AssetImage('assets/images/logo.png'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'La casa de los papelitos',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: menuTextColor,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),

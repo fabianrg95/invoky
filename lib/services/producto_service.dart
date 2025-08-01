@@ -116,4 +116,44 @@ class ProductoService {
       rethrow;
     }
   }
+  
+  // Actualizar los datos de un producto existente
+  Future<void> actualizarProducto({
+    required String productoId,
+    String? nombre,
+    double? precioVenta,
+  }) async {
+    try {
+      final Map<String, dynamic> updateData = {};
+      
+      if (nombre != null) {
+        updateData['nombre'] = nombre;
+      }
+      
+      if (precioVenta != null) {
+        updateData['precio_venta'] = precioVenta.toInt();
+        // Recalcular margen de ganancia basado en el nuevo precio
+        final producto = await _supabase
+            .from('productos')
+            .select('precio_compra_unidad')
+            .eq('id', productoId)
+            .single();
+            
+        if (producto['precio_compra_unidad'] != null) {
+          final double precioCompra = (producto['precio_compra_unidad'] as num).toDouble();
+          updateData['margen_ganancia'] = precioVenta - precioCompra;
+        }
+      }
+      
+      if (updateData.isNotEmpty) {
+        await _supabase
+            .from('productos')
+            .update(updateData)
+            .eq('id', productoId);
+      }
+    } catch (e) {
+      print('Error al actualizar producto: $e');
+      rethrow;
+    }
+  }
 }

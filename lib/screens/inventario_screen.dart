@@ -132,6 +132,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
       final productoEditable = ProductoEditable(
         id: productoDetallado.id,
         nombre: productoDetallado.nombre,
+        precioCompraUnidad: productoDetallado.precioCompraUnidad,
         precio: productoDetallado.precio,
         iva19: productoDetallado.iva19,
         iva30: productoDetallado.iva30,
@@ -771,6 +772,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                     final productoEditable = ProductoEditable(
                                       id: productoDetallado.id,
                                       nombre: productoDetallado.nombre,
+                                      precioCompraUnidad: productoDetallado.precioCompraUnidad,
                                       precio: productoDetallado.precio,
                                       iva19: productoDetallado.iva19,
                                       iva30: productoDetallado.iva30,

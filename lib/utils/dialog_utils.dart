@@ -79,10 +79,213 @@ Future<void> mostrarDetalleProducto({
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Sección de nombre del producto
+                    Row(
+                      children: [
+                        const Text('Nombre:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(producto.nombre)),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () async {
+                            final nombreController = TextEditingController(text: producto.nombre);
+                            final formKey = GlobalKey<FormState>();
+                            bool isProcessing = false;
+
+                            final result = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => StatefulBuilder(
+                                builder: (context, setState) {
+                                  return AlertDialog(
+                                    title: const Text('Editar nombre del producto'),
+                                    content: Form(
+                                      key: formKey,
+                                      child: TextFormField(
+                                        controller: nombreController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Nuevo nombre',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Por favor ingrese un nombre';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: isProcessing
+                                            ? null
+                                            : () => Navigator.pop(context, false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: isProcessing
+                                            ? null
+                                            : () async {
+                                                if (formKey.currentState!.validate()) {
+                                                  setState(() => isProcessing = true);
+                                                  try {
+                                                    await productoService.actualizarProducto(
+                                                      productoId: producto.id,
+                                                      nombre: nombreController.text,
+                                                    );
+                                                    producto.actualizarNombre(nombreController.text);
+                                                    Navigator.pop(context, true);
+                                                  } catch (e) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Error al actualizar: $e'),
+                                                        backgroundColor: Colors.red,
+                                                      ),
+                                                    );
+                                                    setState(() => isProcessing = false);
+                                                  }
+                                                }
+                                              },
+                                        child: isProcessing
+                                            ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                ),
+                                              )
+                                            : const Text('Guardar'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            );
+                            
+                            if (result == true) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Nombre actualizado correctamente')),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
                     // Sección de precios
-                    _buildInfoRow('Precio base:', '\$${producto.precio.toStringAsFixed(2)}'),
+                    Row(
+                      children: [
+                        const Text('Precio base:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Text('\$${producto.precio.toStringAsFixed(2)}'),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () async {
+                            final precioController = TextEditingController(
+                              text: producto.precio.toStringAsFixed(2),
+                            );
+                            final formKey = GlobalKey<FormState>();
+                            bool isProcessing = false;
+
+                            final result = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => StatefulBuilder(
+                                builder: (context, setState) {
+                                  return AlertDialog(
+                                    title: const Text('Actualizar precio'),
+                                    content: Form(
+                                      key: formKey,
+                                      child: TextFormField(
+                                        controller: precioController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Nuevo precio',
+                                          prefixText: '\$ ',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                                        ],
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Por favor ingrese un precio';
+                                          }
+                                          final precio = double.tryParse(value);
+                                          if (precio == null || precio <= 0) {
+                                            return 'Ingrese un precio válido';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: isProcessing
+                                            ? null
+                                            : () => Navigator.pop(context, false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: isProcessing
+                                            ? null
+                                            : () async {
+                                                if (formKey.currentState!.validate()) {
+                                                  setState(() => isProcessing = true);
+                                                  try {
+                                                    final nuevoPrecio = double.parse(precioController.text);
+                                                    await productoService.actualizarProducto(
+                                                      productoId: producto.id,
+                                                      precioVenta: nuevoPrecio,
+                                                    );
+                                                    producto.actualizarPrecio(nuevoPrecio);
+                                                    Navigator.pop(context, true);
+                                                  } catch (e) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Error al actualizar: $e'),
+                                                        backgroundColor: Colors.red,
+                                                      ),
+                                                    );
+                                                    setState(() => isProcessing = false);
+                                                  }
+                                                }
+                                              },
+                                        child: isProcessing
+                                            ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                ),
+                                              )
+                                            : const Text('Guardar'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            );
+                            
+                            if (result == true) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Precio actualizado correctamente')),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                     const Divider(),
               
+                    _buildInfoRow('precio compra unidad:', '\$${producto.precioCompraUnidad.toStringAsFixed(2)}'),
+              
+                    const SizedBox(height: 8),
                     _buildInfoRow('IVA 19%:', '\$${producto.iva19.toStringAsFixed(2)}'),
               
                     const SizedBox(height: 8),

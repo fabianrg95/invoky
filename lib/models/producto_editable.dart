@@ -5,6 +5,7 @@ import 'producto.dart';
 class ProductoEditable with ChangeNotifier {
   String id;
   String nombre;
+  double precioCompraUnidad;
   double precio;
   double iva19;
   double iva30;
@@ -14,6 +15,7 @@ class ProductoEditable with ChangeNotifier {
   ProductoEditable({
     required this.id,
     required this.nombre,
+    this.precioCompraUnidad = 0.0,
     required this.precio,
     this.iva19 = 0.0,
     this.iva30 = 0.0,
@@ -26,6 +28,7 @@ class ProductoEditable with ChangeNotifier {
     return ProductoEditable(
       id: producto.id,
       nombre: producto.nombre,
+      precioCompraUnidad: producto.precioCompraUnidad,
       precio: producto.precio,
       iva19: producto.iva19,
       iva30: producto.iva30,
@@ -45,6 +48,18 @@ class ProductoEditable with ChangeNotifier {
   // Actualizar stock
   void actualizarStock(int nuevaCantidad) {
     stock = nuevaCantidad;
+    notifyListeners();
+  }
+  
+  // Actualizar nombre del producto
+  void actualizarNombre(String nuevoNombre) {
+    nombre = nuevoNombre;
+    notifyListeners();
+  }
+  
+  // Actualizar precio del producto
+  void actualizarPrecio(double nuevoPrecio) {
+    precio = nuevoPrecio;
     notifyListeners();
   }
 

@@ -18,16 +18,14 @@ class AppTheme {
       scaffoldBackgroundColor: cosmicBackground,
       cardColor: cosmicSurface,
       dividerColor: Colors.white12,
-      dialogBackgroundColor: cosmicSurface,
       colorScheme: const ColorScheme.dark(
         primary: cosmicPrimary,
         secondary: cosmicAccent,
         surface: cosmicSurface,
-        background: cosmicBackground,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: cosmicText,
-        onBackground: cosmicText,
+        onSurfaceVariant: cosmicText,
       ),
       
       // Tema de texto
@@ -43,7 +41,7 @@ class AppTheme {
         bodyLarge: const TextStyle(color: cosmicText, fontSize: 16),
         bodyMedium: const TextStyle(color: cosmicTextSecondary, fontSize: 14),
         labelLarge: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
-        bodySmall: TextStyle(color: cosmicText.withOpacity(0.7), fontSize: 12),
+        bodySmall: TextStyle(color: cosmicText.withValues(alpha: 0.7), fontSize: 12),
       ),
       
       // Barra de aplicación
@@ -98,7 +96,7 @@ class AppTheme {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         color: cosmicSurface,
       ),
@@ -129,7 +127,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-      ),
+      ), dialogTheme: DialogThemeData(backgroundColor: cosmicSurface),
       
     );
   }

@@ -13,12 +13,14 @@ class CajaDialog extends StatefulWidget {
   });
 
   @override
-  _CajaDialogState createState() => _CajaDialogState();
+  State<CajaDialog> createState() => _CajaDialogState();
 }
 
 class _CajaDialogState extends State<CajaDialog> {
   final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
+  bool isCierre = false;
+
   // Billetes (valores altos)
   final Map<String, int> _billetes = {
     '100000': 100000,
@@ -92,7 +94,7 @@ class _CajaDialogState extends State<CajaDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    bool isCierre = false;
+    
     
 
     return AlertDialog(
@@ -134,8 +136,14 @@ class _CajaDialogState extends State<CajaDialog> {
                     Checkbox(
                       value: isCierre,
                       tristate: false,
+                      checkColor: colorScheme.onPrimary,
+                      fillColor: WidgetStateProperty.all(colorScheme.primary),
+                      hoverColor: colorScheme.primary.withValues(alpha: 0.1),
+                      focusColor: colorScheme.primary.withValues(alpha: 0.1),
                       onChanged: (value) {
-                          isCierre = value ?? false;
+                        setState(() {
+                          isCierre = value!;
+                        });
                       },
                     ),
                     const Text('Cerrar caja?', style: TextStyle(fontSize: 12)),

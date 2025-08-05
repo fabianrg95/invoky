@@ -36,7 +36,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
             });
           }
         },
-        selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+        selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
         backgroundColor: Theme.of(context).cardColor,
         labelStyle: TextStyle(
           color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).textTheme.bodyMedium?.color,
@@ -690,7 +690,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                   Icon(
                                     Icons.search_off,
                                     size: 64,
-                                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.5),
+                                    color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.5),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(

@@ -110,7 +110,7 @@ class _VentasScreenState extends State<VentasScreen> {
 
           final caja = Caja(
             createdAt: DateTime.now(),
-            tipoCaja: esApertura ? TipoCaja.apertura : TipoCaja.cierre,
+            tipoCaja: esApertura ? TipoCaja.apertura : isCierre ? TipoCaja.cierre : TipoCaja.conteo,
             cantidadBillete100000: detalles['100000'],
             cantidadBillete50000: detalles['50000'],
             cantidadBillete20000: detalles['20000'],
@@ -168,9 +168,8 @@ class _VentasScreenState extends State<VentasScreen> {
     final padding = isSmallScreen ? 16.0 : 24.0;
     final spacing = isSmallScreen ? 16.0 : 20.0;
     
-    final availableWidth = size.width - (padding * 2);
-    final cellWidth = isSmallScreen ? availableWidth : (availableWidth - spacing) / 2.5;
-    final cellHeight = isSmallScreen ? 180.0 : 320.0;
+    final availableWidth = size.width - padding;
+    final cellHeight = 320.0;
     
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -200,7 +199,7 @@ class _VentasScreenState extends State<VentasScreen> {
                 formattedDate,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -210,17 +209,17 @@ class _VentasScreenState extends State<VentasScreen> {
             // Layout dinámico según el tamaño de la pantalla
             LayoutBuilder(
               builder: (context, constraints) {
-                if (constraints.maxWidth < 600) {
+                if (constraints.maxWidth < 800) {
                   return _buildNarrowLayout(
                     context, 
-                    cellWidth, 
+                    availableWidth *2,
                     cellHeight,
                     spacing,
                   );
                 } else {
                   return _buildWideLayout(
                     context, 
-                    cellWidth, 
+                    ((availableWidth) - 330) / 2,
                     cellHeight,
                     spacing,
                   );
@@ -549,12 +548,8 @@ class _VentasScreenState extends State<VentasScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
-    // Usamos el estado de la clase
     final bool cajaAbierta = _cajaAbierta;
     final int montoInicial = _montoInicial;
-    
-    // Color según el estado de la caja
-    final statusColor = cajaAbierta ? Colors.green : Colors.red;
     
     return Container(
       width: width,
@@ -605,7 +600,6 @@ class _VentasScreenState extends State<VentasScreen> {
               
               const SizedBox(height: 16),
               
-              // Estado de la caja
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
@@ -644,7 +638,6 @@ class _VentasScreenState extends State<VentasScreen> {
               
               const Spacer(),
               
-              // Monto inicial (visible solo si la caja está abierta)
               if (cajaAbierta) ...[
                 _buildStatRow(
                   context,
@@ -655,13 +648,12 @@ class _VentasScreenState extends State<VentasScreen> {
                 const SizedBox(height: 16),
               ],
               
-              // Botón de acción principal
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
                   onPressed: cajaAbierta 
-                      ? () => _mostrarDialogoCaja(false) // Cerrar caja
+                      ? () => _mostrarDialogoCaja(false)
                       : () => _mostrarDialogoCaja(true), // Abrir caja
                   style: ElevatedButton.styleFrom(
                     backgroundColor: cajaAbierta 
@@ -701,14 +693,12 @@ class _VentasScreenState extends State<VentasScreen> {
               
               const SizedBox(height: 12),
               
-              // Botón secundario
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton(
                   onPressed: cajaAbierta 
                       ? () {
-                          // Mostrar detalles de la caja actual
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(

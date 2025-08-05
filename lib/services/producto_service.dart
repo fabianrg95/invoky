@@ -67,7 +67,6 @@ class ProductoService {
 
       return productoResponse != null ? Producto.fromMap(productoResponse) : null;
     } catch (e) {
-      print('Error al buscar producto por código: $e');
       return null;
     }
   }
@@ -112,7 +111,6 @@ class ProductoService {
 
       return response;
     } catch (e) {
-      print('Error al guardar producto: $e');
       rethrow;
     }
   }
@@ -152,7 +150,6 @@ class ProductoService {
             .eq('id', productoId);
       }
     } catch (e) {
-      print('Error al actualizar producto: $e');
       rethrow;
     }
   }

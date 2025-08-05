@@ -15,7 +15,6 @@ class InventarioService {
 
       return response != null ? Inventario.fromJson(response) : null;
     } catch (e) {
-      print('Error al obtener inventario: $e');
       return null;
     }
   }
@@ -46,7 +45,6 @@ class InventarioService {
         return Inventario.fromJson(response);
       }
     } catch (e) {
-      print('Error al actualizar inventario: $e');
       rethrow;
     }
   }

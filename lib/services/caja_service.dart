@@ -87,8 +87,8 @@ class CajaService {
         'totalVentas': totalVentas,
         'totalEfectivo': totalEfectivo,
         'totalTarjeta': totalTarjeta,
-        'saldoInicial': apertura.valorTotal ?? 0,
-        'saldoFinal': cierre.valorTotal ?? 0,
+        'saldoInicial': apertura.valorTotal,
+        'saldoFinal': cierre.valorTotal,
         'registros': registros,
       };
     } catch (e) {

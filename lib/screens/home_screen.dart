@@ -40,11 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: isSelected 
-            ? menuSelectedColor.withOpacity(0.15) 
+            ? menuSelectedColor.withValues(alpha: 0.15) 
             : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: isSelected
-            ? Border.all(color: menuSelectedColor.withOpacity(0.3))
+            ? Border.all(color: menuSelectedColor.withValues(alpha: 0.3))
             : null,
       ),
       child: ListTile(
@@ -103,10 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppTheme.cosmicSurface.withOpacity(0.8),
+                      color: AppTheme.cosmicSurface.withValues(alpha: 0.8),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           width: 1,
                         ),
                       ),
@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           width: 1,
                         ),
                       ),
@@ -207,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 15,
                       offset: const Offset(0, 4),
                     ),

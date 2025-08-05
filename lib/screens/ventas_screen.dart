@@ -15,8 +15,11 @@ class VentasScreen extends StatefulWidget {
 
 class _VentasScreenState extends State<VentasScreen> {
   bool _cajaAbierta = false;
+  bool _cajaCerrada = false;
   int _montoInicial = 0;
+  int _montoFinal = 0;
   DateTime _horaApertura = DateTime.now();
+  DateTime _horaCierre = DateTime.now();
   final CajaService _cajaService = CajaService();
   bool _isLoading = true;
 
@@ -29,6 +32,8 @@ class _VentasScreenState extends State<VentasScreen> {
   Future<void> _verificarEstadoCaja() async {
     try {
       final cajaAbierta = await _cajaService.verificarCajaAbierta();
+      final cajaCerrada = await _cajaService.verificarCajaCerrada();
+      
       if (cajaAbierta) {
         final caja = await _cajaService.obtenerCajaAbierta();
         if (caja != null) {
@@ -36,9 +41,19 @@ class _VentasScreenState extends State<VentasScreen> {
           _horaApertura = caja.createdAt;
         }
       }
+
+      if (cajaCerrada) {
+        final caja = await _cajaService.obtenerCajaCerrada();
+        if (caja != null) {
+          _montoFinal = caja.valorTotal;
+          _horaCierre = caja.createdAt;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _cajaAbierta = cajaAbierta;
+          _cajaCerrada = cajaCerrada;
           _isLoading = false;
         });
       }
@@ -99,18 +114,23 @@ class _VentasScreenState extends State<VentasScreen> {
 
   // Muestra el diálogo de caja (apertura o cierre)
   void _mostrarDialogoCaja(bool esApertura) {
+    // Capture the context before the async operation
+    final currentContext = context;
+    
     showDialog(
       context: context,
-      builder: (context) => CajaDialog(
+      builder: (dialogContext) => CajaDialog(
         isOpening: esApertura,
         onSave: (valores) async {
           final total = valores['total'] as double;
           final detalles = valores['detalles'] as Map<String, dynamic>;
           final isCierre = valores['isCierre'] as bool;
 
+          final tipoCaja = esApertura ? TipoCaja.apertura : isCierre ? TipoCaja.cierre : TipoCaja.conteo;
+
           final caja = Caja(
             createdAt: DateTime.now(),
-            tipoCaja: esApertura ? TipoCaja.apertura : isCierre ? TipoCaja.cierre : TipoCaja.conteo,
+            tipoCaja: tipoCaja,
             cantidadBillete100000: detalles['100000'],
             cantidadBillete50000: detalles['50000'],
             cantidadBillete20000: detalles['20000'],
@@ -127,12 +147,9 @@ class _VentasScreenState extends State<VentasScreen> {
           
           await _cajaService.crearRegistroCaja(caja);
           
-          setState(() {
-            _cajaAbierta = true;
-          });
-          // Mostrar mensaje de éxito
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            // Show success message using the captured context
+            ScaffoldMessenger.of(currentContext).showSnackBar(
               SnackBar(
                 content: Text(esApertura 
                   ? 'Caja abierta correctamente' 
@@ -141,6 +158,11 @@ class _VentasScreenState extends State<VentasScreen> {
                 backgroundColor: Colors.green,
               ),
             );
+            
+            // Update the state after showing the message
+            setState(() {
+               _verificarEstadoCaja();
+            });
           }
         },
       ),
@@ -549,7 +571,9 @@ class _VentasScreenState extends State<VentasScreen> {
     final colorScheme = theme.colorScheme;
     
     final bool cajaAbierta = _cajaAbierta;
+    final bool cajaCerrada = _cajaCerrada;
     final int montoInicial = _montoInicial;
+    final int montoFinal = _montoFinal;
     
     return Container(
       width: width,
@@ -603,11 +627,11 @@ class _VentasScreenState extends State<VentasScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: cajaAbierta ? Colors.green.withValues(alpha: 0.5) : Colors.red.withValues(alpha: 0.5),
+                  color: cajaAbierta ? cajaCerrada ? Colors.red.withValues(alpha: 0.5) : Colors.green.withValues(alpha: 0.5) : Colors.red.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: cajaAbierta 
-                        ? Colors.green.withValues(alpha: 0.3) 
+                        ? cajaCerrada ? Colors.red.withValues(alpha: 0.3) : Colors.green.withValues(alpha: 0.3) 
                         : Colors.red.withValues(alpha: 0.3),
                     width: 1,
                   ),
@@ -619,17 +643,17 @@ class _VentasScreenState extends State<VentasScreen> {
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: cajaAbierta ? Colors.green : Colors.red,
+                        color: cajaAbierta ? cajaCerrada ? Colors.red : Colors.green : Colors.red,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      cajaAbierta ? 'Caja Abierta' : 'Caja Cerrada',
+                      cajaAbierta ? cajaCerrada ? 'Caja Cerrada' : 'Caja Abierta' : 'Caja Cerrada',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: cajaAbierta ? Colors.green.withValues(alpha: 0.8) : Colors.red.withValues(alpha: 0.8),
+                        color: cajaAbierta ? cajaCerrada ? Colors.red.withValues(alpha: 0.8) : Colors.green.withValues(alpha: 0.8) : Colors.red.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -647,8 +671,19 @@ class _VentasScreenState extends State<VentasScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
+
+              if (cajaCerrada) ...[
+                _buildStatRow(
+                  context,
+                  label: 'Monto Final',
+                  value: '\$${montoFinal.toStringAsFixed(2)}',
+                  icon: Icons.account_balance_wallet_outlined,
+                ),
+                const SizedBox(height: 16),
+              ],
               
-              SizedBox(
+              if (!cajaAbierta || (cajaAbierta && !cajaCerrada)) ...[
+                SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
@@ -692,6 +727,7 @@ class _VentasScreenState extends State<VentasScreen> {
               ),
               
               const SizedBox(height: 12),
+              ],
               
               SizedBox(
                 width: double.infinity,
@@ -712,6 +748,7 @@ class _VentasScreenState extends State<VentasScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  if (cajaAbierta) ...[
                                   Text(
                                     'Monto Inicial:',
                                     style: GoogleFonts.poppins(
@@ -728,21 +765,54 @@ class _VentasScreenState extends State<VentasScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
+                                  ],
+                                  if (cajaCerrada) ...[
                                   Text(
-                                    'Estado: ${_cajaAbierta ? 'Abierta' : 'Cerrada'}',
+                                    'Monto Final:',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                  Text(
+                                    '\$${_montoFinal.toStringAsFixed(2)}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ],
+                                  
+                                  Text(
+                                    'Estado: ${_cajaAbierta ? cajaCerrada ? 'Cerrada' : 'Abierta' : 'Cerrada'}',
                                     style: GoogleFonts.poppins(
                                       color: _cajaAbierta ? Colors.green : Colors.red,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
+                                  if (cajaAbierta) ...[
                                   Text(
-                                    'Hora de ${_cajaAbierta ? 'apertura' : 'cierre'}: ${_horaApertura.hour}:${_horaApertura.minute}',
+                                    'Hora de Apertura: ${_horaApertura.hour}:${_horaApertura.minute}',
                                     style: GoogleFonts.poppins(
                                       fontSize: 13,
                                       color: colorScheme.onSurface.withValues(alpha: 0.6),
                                     ),
                                   ),
+                                  const SizedBox(height: 8),
+                                  ],
+                                  if (cajaCerrada) ...[
+                                  Text(
+                                'Hora de cierre: ${_horaCierre.hour}:${_horaCierre.minute}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ],
                                 ],
                               ),
                               actions: [

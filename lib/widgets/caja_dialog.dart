@@ -103,7 +103,7 @@ class _CajaDialogState extends State<CajaDialog> {
         borderRadius: BorderRadius.circular(16),
       ),
       title: Text(
-        widget.isOpening ? 'Apertura de Caja' : 'Cierre de Caja',
+        widget.isOpening ? 'Apertura de Caja' : isCierre ? 'Cierre de Caja' : 'Conteo deCaja',
         style: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
           fontSize: 18,
@@ -126,10 +126,8 @@ class _CajaDialogState extends State<CajaDialog> {
               ),
               const SizedBox(height: 16),
               _buildDenominacionFields(),
-              const SizedBox(height: 24),
-              Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.2)),
-              const SizedBox(height: 16),
-              Container(
+              if (!widget.isOpening) ...[
+                Container(
                 margin: const EdgeInsets.only(top: 8),
                 child: Row(
                   children: [
@@ -150,6 +148,9 @@ class _CajaDialogState extends State<CajaDialog> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              ],
+              Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.2)),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,7 +223,7 @@ class _CajaDialogState extends State<CajaDialog> {
             elevation: 0,
           ),
           child: Text(
-            widget.isOpening ? 'Abrir Caja' : 'Cerrar Caja',
+            widget.isOpening ? 'Abrir Caja' : isCierre ? 'Cerrar Caja' : 'Conteo de Caja',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w500,
               fontSize: 14,
@@ -239,7 +240,7 @@ class _CajaDialogState extends State<CajaDialog> {
     final formatter = NumberFormat.currency(
       symbol: '\$',
       decimalDigits: 0,
-      locale: 'es_CO',
+      locale: 'es_CO', customPattern: '\$#,##0'
     );
 
     return Column(

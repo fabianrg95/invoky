@@ -21,6 +21,22 @@ class CajaService {
     }
   }
 
+  Future<bool> verificarCajaCerrada() async {
+    try {
+      final fechaHoy = DateTime.now().toIso8601String().split('T').first;
+      final response = await _supabase
+          .from(_tableName)
+          .select("id")
+          .eq("tipo_caja", "cierre")
+          .gte("created_at", fechaHoy)
+          .order('created_at', ascending: false)
+          .limit(1);
+      return response.isNotEmpty;
+    } catch (e) {
+      throw Exception('Error al verificar la existencia de un registro de caja: $e');
+    }
+  }
+
   Future<Caja?> obtenerCajaAbierta() async {
     try {
       final fechaHoy = DateTime.now().toIso8601String().split('T').first;
@@ -34,6 +50,22 @@ class CajaService {
       return response.isNotEmpty ? Caja.fromJson(response.first) : null;
     } catch (e) {
       throw Exception('Error al obtener el registro de caja abierta: $e');
+    }
+  }
+
+  Future<Caja?> obtenerCajaCerrada() async {
+    try {
+      final fechaHoy = DateTime.now().toIso8601String().split('T').first;
+      final response = await _supabase
+          .from(_tableName)
+          .select()
+          .eq("tipo_caja", "cierre")
+          .gte("created_at", fechaHoy)
+          .order('created_at', ascending: false)
+          .limit(1);
+      return response.isNotEmpty ? Caja.fromJson(response.first) : null;
+    } catch (e) {
+      throw Exception('Error al obtener el registro de caja cerrada: $e');
     }
   }
 

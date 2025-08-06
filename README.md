@@ -1,13 +1,15 @@
-# Inventario Tienda
+# Invoky
 
-Aplicación de escritorio desarrollada en Flutter para la gestión de inventario y ventas en una tienda, con integración a Supabase como base de datos y soporte para lectura de códigos de barras.
+Aplicación de escritorio desarrollada en Flutter para la gestión integral de inventario, ventas y caja en tiendas minoristas. Con integración a Supabase como base de datos y soporte para lectura de códigos de barras.
 
 ## Características principales
 
-- Visualización del inventario de productos (nombre y precio)
+- Gestión completa de inventario de productos
+- Control de caja con registro de apertura y cierre
 - Búsqueda de productos por código de barras (compatible con lectores USB)
-- Registro y administración de productos (en desarrollo)
-- Registro de ventas y control de stock (en desarrollo)
+- Registro detallado de ventas
+- Gestión de clientes y proveedores
+- Reportes y estadísticas de ventas
 - Multiplataforma: macOS y Windows
 
 ## Requisitos
@@ -21,8 +23,8 @@ Aplicación de escritorio desarrollada en Flutter para la gestión de inventario
 1. **Clona el repositorio:**
 
    ```sh
-   git clone https://github.com/tu_usuario/inventario_tienda.git
-   cd inventario_tienda
+   git clone https://github.com/tu_usuario/invoky.git
+   cd invoky
    ```
 
 2. **Instala las dependencias:**
@@ -48,14 +50,22 @@ Aplicación de escritorio desarrollada en Flutter para la gestión de inventario
 
 ## Estructura del proyecto
 
-- `lib/models/` — Modelos de datos (ej: Producto)
+- `lib/models/` — Modelos de datos (Producto, Caja, Venta, etc.)
+- `lib/screens/` — Pantallas principales de la aplicación
 - `lib/services/` — Servicios para acceso a Supabase y lógica de negocio
-- `lib/main.dart` — Punto de entrada y UI principal
+- `lib/widgets/` — Componentes reutilizables
+- `lib/theme/` — Configuración de temas y estilos
+- `lib/utils/` — Utilidades y helpers
+- `lib/main.dart` — Punto de entrada de la aplicación
 - `.env` — Variables de entorno (no versionado)
 
 ## Atajos de teclado
 
-- **b** — Abre el diálogo de búsqueda por código de barras
+- **⌘/Ctrl + B** — Abre el diálogo de búsqueda por código de barras
+- **⌘/Ctrl + N** — Nueva venta/transacción
+- **⌘/Ctrl + K** — Abre la gestión de caja
+- **⌘/Ctrl + I** — Ir al inventario
+- **⌘/Ctrl + R** — Actualizar vista actual
 
 ## Buenas prácticas
 

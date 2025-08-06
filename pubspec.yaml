@@ -1,8 +1,15 @@
-name: inventario_tienda
-description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+name: Invoky
+description: "Sistema de inventario y ventas para tiendas"
+
+# Configuración de la aplicación
+publish_to: 'none' # Evita la publicación accidental a pub.dev
+
+# Información de la aplicación
+version: 1.0.0+1
+
+# Información del desarrollador
+author: fabian.rg0801@email.com>
+homepage: https://tudominio.com
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -16,7 +23,6 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
 
 environment:
  sdk: ^3.8.1
@@ -41,7 +47,7 @@ dependencies:
  intl: ^0.20.1
  http: ^1.4.0
  google_fonts: ^6.1.0
-
+ 
 dev_dependencies:
  flutter_test:
   sdk: flutter

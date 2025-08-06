@@ -1,6 +1,6 @@
+import 'package:Invoky/models/producto_editable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:inventario_tienda/models/producto_editable.dart';
 import '../models/producto.dart';
 import '../services/producto_service.dart';
 import '../services/codigo_barras_service.dart';

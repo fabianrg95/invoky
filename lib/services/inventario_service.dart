@@ -24,6 +24,7 @@ class InventarioService {
     required int productoId,
     required int cantidad,
     bool esNuevo = false,
+    required int stockUnitario,
   }) async {
     try {
       // Si es un producto nuevo, creamos el registro de inventario
@@ -33,6 +34,7 @@ class InventarioService {
             .insert({
               'producto_id': productoId,
               'stock': cantidad,
+              'stock_unitario': stockUnitario,
             })
             .select()
             .single();

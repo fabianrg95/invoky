@@ -80,6 +80,9 @@ class ProductoService {
     required double iva19,
     required double iva30,
     required double precioRecomendadoVenta,
+    required bool permiteVentaUnitaria,
+    required int cantidadUnitariaPorPaquete,
+    required int precioVentaUnitaria,
   }) async {
     try {
       // Verificar si el producto ya existe
@@ -105,6 +108,9 @@ class ProductoService {
             'iva_30': iva30,
             'precio_recomendado': precioRecomendadoVenta,
             'margen_ganancia': valorVenta - valorCompra,
+            'permite_venta_unitaria': permiteVentaUnitaria,
+            'cantidad_unitaria_por_paquete': cantidadUnitariaPorPaquete,
+            'precio_venta_unidad': precioVentaUnitaria,
           })
           .select()
           .single();

@@ -178,15 +178,140 @@ class _InventarioScreenState extends State<InventarioScreen> {
     );
   }
 
+  // Método para mostrar la información del producto
+  Future<void> _mostrarInformacionProducto(Producto producto) async {
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      // Obtener los detalles del producto
+      final productoDetallado = await _productoService.obtenerProductoDetallado(producto.id);
+
+      // Cerrar el diálogo de carga
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      
+      // Mostrar diálogo con la información del producto
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            productoDetallado.nombre, 
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildInfoRow('Precio', 
+                  '\$${productoDetallado.precio.toStringAsFixed(2)}',
+                  isHighlighted: true
+                ),
+                _buildInfoRow('Stock', 
+                  '${productoDetallado.stock} unidades', 
+                  color: productoDetallado.stock > 0 ? Colors.green : Colors.red
+                ),
+                if (productoDetallado.codigoBarras != null) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow('Código de barras', productoDetallado.codigoBarras!),
+                ],
+                const SizedBox(height: 16),
+                const Text('Impuestos:', style: TextStyle(fontWeight: FontWeight.bold)),
+                _buildInfoRow('IVA 19%', '\$${productoDetallado.iva19.toStringAsFixed(2)}'),
+                _buildInfoRow('IVA 30%', '\$${productoDetallado.iva30.toStringAsFixed(2)}'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Cerrar diálogo de información
+                _mostrarEditarProducto(producto);
+              },
+              child: const Text('Editar'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _mostrarMensajeError('Error al cargar los detalles del producto: $e');
+      }
+    }
+  }
+
+  // Método para mostrar el formulario de edición de producto
+  Future<void> _mostrarEditarProducto(Producto producto) async {
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      // Obtener los detalles del producto
+      final productoDetallado = await _productoService.obtenerProductoDetallado(producto.id);
+
+      if (!mounted) return;
+      
+      // Cerrar el diálogo de carga
+      Navigator.of(context).pop();
+
+      final productoEditable = ProductoEditable(
+        id: productoDetallado.id,
+        nombre: productoDetallado.nombre,
+        precioCompraUnidad: productoDetallado.precioCompraUnidad,
+        precio: productoDetallado.precio,
+        iva19: productoDetallado.iva19,
+        iva30: productoDetallado.iva30,
+        codigoBarras: productoDetallado.codigoBarras,
+        stock: productoDetallado.stock,
+      );
+
+      // Mostrar el diálogo de edición
+      await mostrarDetalleProducto(
+        context: context,
+        producto: productoEditable,
+        productoService: _productoService,
+        codigoBarrasService: CodigoBarrasService(),
+        onStockActualizado: _cargarProductos,
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _mostrarMensajeError('Error al cargar los detalles del producto: $e');
+      }
+    }
+  }
+
   Future<void> _mostrarModalNuevoProducto() async {
     final codigoBarrasController = TextEditingController();
     final nombreController = TextEditingController();
     final valorCompraController = TextEditingController();
     final valorVentaController = TextEditingController();
     final cantidadStockController = TextEditingController(text: '1');
+    final cantidadUnitariaPorPaqueteController = TextEditingController(text: '1');
+    final cantidadStockUnitariaController = TextEditingController(text: '0');
+    final valorVentaUnitariaController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool guardando = false;
     bool ivaIncluido = false;
+    bool permiteVentaUnitaria = false;
     double iva19 = 0.0;
     double iva30 = 0.0;
     double precioRecomendadoVenta = 0.0;
@@ -313,51 +438,103 @@ class _InventarioScreenState extends State<InventarioScreen> {
                               _buildInfoRow('IVA 19%', '\$${iva19.toStringAsFixed(2)}', isHighlighted: true),
                               _buildInfoRow('IVA 30%', '\$${iva30.toStringAsFixed(2)}', isHighlighted: true),
                               const Divider(height: 20, thickness: 1),
-                              _buildInfoRow('Total', '\$${valorVentaController.text.isEmpty ? '0.00' : valorVentaController.text}', isTotal: true),
+                              _buildInfoRow('Total', '\$$precioRecomendadoVenta', isTotal: true),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        TextFormField(
-                          controller: valorVentaController,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.green),
-                          decoration: InputDecoration(
-                            labelText: 'Precio de venta',
-                            labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.green),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.green, width: 2),
-                            ),
-                            prefixText: '\$ ',
-                            prefixStyle: const TextStyle(color: Colors.green, fontSize: 15, fontWeight: FontWeight.w500),
-                            hintText: '0.00',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            filled: true,
-                            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: permiteVentaUnitaria,
+                                onChanged: (value) {
+                                  double precioVentaUnitaria = valorVentaController.text.isEmpty ? 0.0 : (double.parse(valorVentaController.text) / double.parse(cantidadUnitariaPorPaqueteController.text));
+                                  setModalState(() {
+                                    permiteVentaUnitaria = value ?? false;   
+                                    valorVentaUnitariaController.text = precioVentaUnitaria.toStringAsFixed(2);                                 
+                                  });
+                                },
+                              ),
+                              const Text('Permite venta unitaria', style: TextStyle(fontSize: 12)),
+                            ],
                           ),
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor ingrese el valor de venta';
-                            }
-                            final valor = double.tryParse(value);
-                            if (valor == null || valor <= 0) {
-                              return 'Ingrese un valor válido mayor a cero';
-                            }
-                            return null;
-                          },
                         ),
-                        const SizedBox(height: 20),
-                        campoTexto(cantidadStockController, theme, 'Cantidad en stock', 'Por favor ingrese una cantidad en stock'),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: valorVentaController,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.green),
+                                decoration: InputDecoration(
+                                  labelText: 'Precio de venta',
+                                  labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7)),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Colors.green),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Colors.green),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Colors.green, width: 2),
+                                  ),
+                                  prefixText: '\$ ',
+                                  prefixStyle: const TextStyle(color: Colors.green, fontSize: 15, fontWeight: FontWeight.w500),
+                                  hintText: '0.00',
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  filled: true,
+                                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                ),
+                                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor ingrese el valor de venta';
+                                  }
+                                  final valor = double.tryParse(value);
+                                  if (valor == null || valor <= 0) {
+                                    return 'Ingrese un valor válido mayor a cero';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  double precioVentaUnitaria = valorVentaController.text.isEmpty ? 0.0 : (double.parse(valorVentaController.text) / double.parse(cantidadUnitariaPorPaqueteController.text));
+                                  setModalState(() {
+                                    valorVentaUnitariaController.text = precioVentaUnitaria.toStringAsFixed(2);                                 
+                                  });
+                                },
+                              ),
+                            ),
+                            if (permiteVentaUnitaria)...[
+                            const SizedBox(width: 10),
+                            Expanded(child: campoTexto(valorVentaUnitariaController, theme, 'Valor venta unitaria', 'Por favor ingrese un valor de venta unitaria')),
+                          ],]
+                        ),
+                        
+                        if (permiteVentaUnitaria)...[
+                                                  const SizedBox(height: 20),
+
+                        campoTexto(cantidadUnitariaPorPaqueteController, theme, 'Cantidad unitaria por paquete', 'Por favor ingrese una cantidad unitaria por paquete', onChanged: (value) {
+                          double precioVentaUnitaria = valorVentaController.text.isEmpty || cantidadUnitariaPorPaqueteController.text.isEmpty ? 0.0 : (double.parse(valorVentaController.text) / double.parse(cantidadUnitariaPorPaqueteController.text));
+                          setModalState(() {
+                            valorVentaUnitariaController.text = precioVentaUnitaria.toStringAsFixed(2);                                 
+                          });
+                        }),
+                        ],
+                       const SizedBox(height: 20),
+                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                        Expanded(child: campoTexto(cantidadStockController, theme, 'Cantidad en stock', 'Por favor ingrese una cantidad en stock')),
+                        if (permiteVentaUnitaria)...[
+                        const SizedBox(width: 20),
+                        Expanded(child: campoTexto(cantidadStockUnitariaController, theme, 'Cantidad en stock unitaria', 'Por favor ingrese una cantidad en stock unitaria')),
+                        ],
+                        ],
+                       ),
                       ],
                     ),
                     // Botones de acción
@@ -402,6 +579,9 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                             iva19: iva19,
                                             iva30: iva30,
                                             precioRecomendadoVenta: precioRecomendadoVenta,
+                                            permiteVentaUnitaria: permiteVentaUnitaria,
+                                            cantidadUnitariaPorPaquete: int.tryParse(cantidadUnitariaPorPaqueteController.text) ?? 0,
+                                            precioVentaUnitaria: int.tryParse(valorVentaUnitariaController.text) ?? 0,
                                           );
 
                                           // Actualizar el inventario
@@ -410,6 +590,7 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                             productoId: productoGuardado['id'],
                                             cantidad: cantidad,
                                             esNuevo: true,
+                                            stockUnitario: int.tryParse(cantidadStockUnitariaController.text) ?? 0,
                                           );
 
                                           // Cerrar el modal y mostrar mensaje de éxito
@@ -475,25 +656,25 @@ class _InventarioScreenState extends State<InventarioScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isHighlighted = false, bool isTotal = false}) {
+  Widget _buildInfoRow(String label, String value, {bool isHighlighted = false, bool isTotal = false, Color? color}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
+              fontWeight: isHighlighted || isTotal ? FontWeight.bold : FontWeight.normal,
               color: isHighlighted ? Colors.blue[800] : Colors.blueGrey[700],
-              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
               fontSize: isTotal ? 16 : 14,
             ),
           ),
           Text(
             value,
             style: TextStyle(
-              color: isTotal ? Colors.green[700] : (isHighlighted ? Colors.blue[800] : Colors.blueGrey[700]),
-              fontWeight: isTotal ? FontWeight.bold : (isHighlighted ? FontWeight.w600 : FontWeight.normal),
+              fontWeight: isHighlighted || isTotal ? FontWeight.bold : FontWeight.normal,
+              color: color ?? (isTotal ? Colors.green[700] : (isHighlighted ? Colors.blue[800] : Colors.blueGrey[700])),
               fontSize: isTotal ? 18 : 14,
             ),
           ),
@@ -724,78 +905,75 @@ class _InventarioScreenState extends State<InventarioScreen> {
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                             elevation: 2,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                              leading: CircleAvatar(
-                                backgroundColor: hasStock ? Colors.green[100] : Colors.red[200],
-                                child: Icon(hasStock ? Icons.inventory_2 : Icons.inventory_outlined, color: hasStock ? Colors.green : Colors.red),
-                              ),
-                              title: Text(producto.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Precio: \$${precio.toStringAsFixed(2)}',
-                                    style: const TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w500),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(hasStock ? Icons.check_circle : Icons.cancel, size: 16, color: hasStock ? Colors.green : Colors.red),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        hasStock ? 'Disponible' : 'Sin stock',
-                                        style: TextStyle(color: hasStock ? Colors.green : Colors.red, fontWeight: FontWeight.w500),
+                            child: InkWell(
+                              onTap: () => _mostrarInformacionProducto(producto),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                                child: Row(
+                                  children: [
+                                    // Contenido principal del ítem
+                                    Expanded(
+                                      child: ListTile(
+                                        contentPadding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                                        leading: CircleAvatar(
+                                          backgroundColor: hasStock ? Colors.green[100] : Colors.red[200],
+                                          child: Icon(
+                                            hasStock ? Icons.inventory_2 : Icons.inventory_outlined, 
+                                            color: hasStock ? Colors.green : Colors.red,
+                                            size: 24,
+                                          ),
+                                        ),
+                                        title: Text(
+                                          producto.nombre, 
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                                        ),
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Precio: \$${precio.toStringAsFixed(2)}',
+                                              style: const TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w500),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  hasStock ? Icons.check_circle : Icons.cancel, 
+                                                  size: 16, 
+                                                  color: hasStock ? Colors.green : Colors.red
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  hasStock ? 'Disponible' : 'Sin stock',
+                                                  style: TextStyle(
+                                                    color: hasStock ? Colors.green : Colors.red, 
+                                                    fontWeight: FontWeight.w500
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                    // Botón de editar
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blue),
+                                      onPressed: () => _mostrarEditarProducto(producto),
+                                      tooltip: 'Editar producto',
+                                      padding: const EdgeInsets.all(8.0),
+                                      constraints: const BoxConstraints(),
+                                      iconSize: 24,
+                                    ),
+                                    // Flecha para mantener consistencia visual
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 8.0),
+                                      child: Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              onTap: () async {
-                                // Mostrar diálogo de carga
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (BuildContext context) {
-                                    return const Center(child: CircularProgressIndicator());
-                                  },
-                                );
-
-                                try {
-                                  // Obtener los detalles del producto
-                                  final productoDetallado = await _productoService.obtenerProductoDetallado(producto.id);
-
-                                  // Cerrar el diálogo de carga
-                                  if (mounted) {
-                                    Navigator.of(context).pop();
-                                    final productoEditable = ProductoEditable(
-                                      id: productoDetallado.id,
-                                      nombre: productoDetallado.nombre,
-                                      precioCompraUnidad: productoDetallado.precioCompraUnidad,
-                                      precio: productoDetallado.precio,
-                                      iva19: productoDetallado.iva19,
-                                      iva30: productoDetallado.iva30,
-                                      codigoBarras: productoDetallado.codigoBarras,
-                                      stock: productoDetallado.stock,
-                                    );
-                                    await mostrarDetalleProducto(
-                                      context: context,
-                                      producto: productoEditable,
-                                      productoService: ProductoService(),
-                                      codigoBarrasService: CodigoBarrasService(),
-                                      onStockActualizado: _cargarProductos,
-                                    );
-                                  }
-                                } catch (e) {
-                                  // Cerrar el diálogo de carga en caso de error
-                                  if (mounted) {
-                                    Navigator.of(context, rootNavigator: true).pop();
-                                    _mostrarMensajeError('Error al cargar los detalles del producto: $e');
-                                  }
-                                }
-                              },
-                              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                             ),
                           );
                         },

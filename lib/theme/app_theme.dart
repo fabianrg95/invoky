@@ -11,6 +11,12 @@ class AppTheme {
   static const Color cosmicTextSecondary = Color(0xFF9E9E9E);
   static const Color cosmicAccent = Color(0xFF00B0FF);
 
+  // colores para el menu
+  static const Color menuBackgroundColor = Color(0xFF1E1E2D);
+  static const Color menuTextColor = Colors.white;
+  static const Color menuIconColor = Color(0xFF92929D);
+  static const Color menuSelectedColor = Color(0xFF6C5ECF);
+
   static ThemeData get darkTheme {
     return ThemeData.dark().copyWith(
       // Configuración básica de colores

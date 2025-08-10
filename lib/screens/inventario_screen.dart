@@ -593,12 +593,14 @@ class _InventarioScreenState extends State<InventarioScreen> {
                                             stockUnitario: int.tryParse(cantidadStockUnitariaController.text) ?? 0,
                                           );
 
-                                          // Cerrar el modal y mostrar mensaje de éxito
+                                          // Cerrar el modal
                                           if (mounted) {
                                             Navigator.of(context).pop(true);
-                                            _mostrarMensajeExito('Producto registrado exitosamente');
-                                            // Recargar la lista de productos
-                                            _cargarProductos();
+                                            // Mostrar mensaje de éxito y recargar solo si el widget sigue montado
+                                            if (mounted) {
+                                              _mostrarMensajeExito('Producto registrado exitosamente');
+                                              _cargarProductos();
+                                            }
                                           }
                                         } catch (e) {
                                           if (mounted) {

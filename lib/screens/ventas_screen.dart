@@ -666,7 +666,7 @@ class _VentasScreenState extends State<VentasScreen> {
                 _buildStatRow(
                   context,
                   label: 'Monto Inicial',
-                  value: '\$${montoInicial.toStringAsFixed(2)}',
+                  value: NumberFormat('\$#,##0', 'es_CL').format(montoInicial),
                   icon: Icons.account_balance_wallet_outlined,
                 ),
                 const SizedBox(height: 16),
@@ -676,7 +676,7 @@ class _VentasScreenState extends State<VentasScreen> {
                 _buildStatRow(
                   context,
                   label: 'Monto Final',
-                  value: '\$${montoFinal.toStringAsFixed(2)}',
+                  value: NumberFormat('\$#,##0', 'es_CL').format(montoFinal),
                   icon: Icons.account_balance_wallet_outlined,
                 ),
                 const SizedBox(height: 16),

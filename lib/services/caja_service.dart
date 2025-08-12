@@ -80,12 +80,18 @@ class CajaService {
     }
   }
 
-  // Obtener el historial de caja en un rango de fechas
-  Future<List<Caja>> obtenerHistorialCaja({required DateTime fechaInicio, required DateTime fechaFin}) async {
+  // Obtener el historial de caja (últimos 30 días por defecto)
+  Future<List<Caja>> obtenerHistorialCaja({DateTime? fechaInicio, DateTime? fechaFin}) async {
     try {
-      final response = await _supabase.from(_tableName).select().order('created_at', ascending: false);
+      final fechaHoy = DateTime.now().toIso8601String().split('T').first;
+      
+      final response = await _supabase
+          .from(_tableName)
+          .select()
+          .gte("created_at", fechaHoy)
+          .order('created_at', ascending: false);
 
-      return response.map<Caja>((json) => Caja.fromJson(json)).toList();
+      return (response as List).map<Caja>((json) => Caja.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Error al obtener el historial de caja: $e');
     }

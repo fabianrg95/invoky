@@ -22,6 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   DateTime _horaCierre = DateTime.now();
   final CajaService _cajaService = CajaService();
   bool _isLoading = true;
+  List<Caja> _historialCaja = [];
 
   @override
   void initState() {
@@ -49,11 +50,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _horaCierre = caja.createdAt;
         }
       }
-
+      
+      // Cargar historial de caja
+      final historial = await _cajaService.obtenerHistorialCaja();
+      
       if (mounted) {
         setState(() {
           _cajaAbierta = cajaAbierta;
           _cajaCerrada = cajaCerrada;
+          _historialCaja = historial;
           _isLoading = false;
         });
       }
@@ -714,100 +719,225 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               
               const SizedBox(height: 12),
-              ],
-              
+
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton(
                   onPressed: cajaAbierta 
                       ? () {
+                          final size = MediaQuery.of(context).size;
                           showDialog(
                             context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text(
-                                'Detalles de Caja',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
+                            builder: (context) => Dialog(
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                width: size.width * 0.9,
+                                height: size.height * 0.8,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Detalles de Caja',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // Sección de resumen
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(16),
+                                              decoration: BoxDecoration(
+                                                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  if (cajaAbierta) ...[
+                                                    Text(
+                                                      'Monto Inicial:',
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 14,
+                                                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '\$${NumberFormat('#,##0', 'es_CL').format(montoInicial)}',
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 24,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: colorScheme.primary,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                  ],
+                                                  if (cajaCerrada) ...[
+                                                    Text(
+                                                      'Monto Final:',
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 14,
+                                                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '\$${NumberFormat('#,##0', 'es_CL').format(montoFinal)}',
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 24,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: colorScheme.primary,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                  ],
+                                                  Text(
+                                                    'Estado: ${cajaAbierta ? (cajaCerrada ? 'Cerrada' : 'Abierta') : 'Cerrada'}',
+                                                    style: GoogleFonts.poppins(
+                                                      color: cajaAbierta ? (cajaCerrada ? Colors.red : Colors.green) : Colors.red,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  if (cajaAbierta) ...[
+                                                    Text(
+                                                      'Hora de Apertura: ${_horaApertura.hour.toString().padLeft(2, '0')}:${_horaApertura.minute.toString().padLeft(2, '0')}',
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 13,
+                                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                  ],
+                                                  if (cajaCerrada) ...[
+                                                    Text(
+                                                      'Hora de Cierre: ${_horaCierre.hour.toString().padLeft(2, '0')}:${_horaCierre.minute.toString().padLeft(2, '0')}',
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 13,
+                                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                            
+                                            // Sección de historial
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'Historial de Movimientos',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: colorScheme.onSurface.withValues(alpha: 0.9),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            if (_historialCaja.isEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                                child: Text(
+                                                  'No hay registros de caja recientes.',
+                                                  style: GoogleFonts.poppins(
+                                                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              )
+                                            else
+                                              Container(
+                                                constraints: const BoxConstraints(maxHeight: 400),
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: _historialCaja.length,
+                                                  itemBuilder: (context, index) {
+                                                    final registro = _historialCaja[index];
+                                                    final isApertura = registro.tipoCaja == TipoCaja.apertura;
+                                                    final isCierre = registro.tipoCaja == TipoCaja.cierre;
+                                                    final fecha = registro.createdAt;
+                                                    final hora = '${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
+                                                    
+                                                    return Card(
+                                                      margin: const EdgeInsets.only(bottom: 8),
+                                                      elevation: 1,
+                                                      child: ListTile(
+                                                        dense: true,
+                                                        leading: Container(
+                                                          padding: const EdgeInsets.all(8),
+                                                          decoration: BoxDecoration(
+                                                            color: isApertura 
+                                                              ? Colors.green.withValues(alpha: 0.1) 
+                                                              : isCierre 
+                                                                ? Colors.red.withValues(alpha: 0.1)
+                                                                : Colors.blue.withValues(alpha: 0.1),
+                                                            shape: BoxShape.circle,
+                                                          ),
+                                                          child: Icon(
+                                                            isApertura 
+                                                              ? Icons.lock_open
+                                                              : isCierre 
+                                                                ? Icons.lock
+                                                                : Icons.currency_exchange,
+                                                            color: isApertura 
+                                                              ? Colors.green 
+                                                              : isCierre 
+                                                                ? Colors.red 
+                                                                : Colors.blue,
+                                                            size: 20,
+                                                          ),
+                                                        ),
+                                                        title: Text(
+                                                          isApertura 
+                                                            ? 'Apertura de Caja' 
+                                                            : isCierre 
+                                                              ? 'Cierre de Caja' 
+                                                              : 'Conteo de Caja',
+                                                          style: GoogleFonts.poppins(
+                                                            fontWeight: FontWeight.w500,
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                        subtitle: Text(
+                                                          '${fecha.day}/${fecha.month}/${fecha.year} $hora',
+                                                          style: GoogleFonts.poppins(
+                                                            fontSize: 12,
+                                                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                                          ),
+                                                        ),
+                                                        trailing: Text(
+                                                          '\$${NumberFormat('#,##0', 'es_CL').format(registro.valorTotal)}',
+                                                          style: GoogleFonts.poppins(
+                                                            fontWeight: FontWeight.w600,
+                                                            color: colorScheme.primary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Cerrar'),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (cajaAbierta) ...[
-                                  Text(
-                                    'Monto Inicial:',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                  Text(
-                                    '\$${_montoInicial.toStringAsFixed(2)}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ],
-                                  if (cajaCerrada) ...[
-                                  Text(
-                                    'Monto Final:',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: colorScheme.onSurface.withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                  Text(
-                                    '\$${_montoFinal.toStringAsFixed(2)}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ],
-                                  
-                                  Text(
-                                    'Estado: ${_cajaAbierta ? cajaCerrada ? 'Cerrada' : 'Abierta' : 'Cerrada'}',
-                                    style: GoogleFonts.poppins(
-                                      color: _cajaAbierta ? Colors.green : Colors.red,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (cajaAbierta) ...[
-                                  Text(
-                                    'Hora de Apertura: ${_horaApertura.hour}:${_horaApertura.minute}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ],
-                                  if (cajaCerrada) ...[
-                                  Text(
-                                'Hora de cierre: ${_horaCierre.hour}:${_horaCierre.minute}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ],
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cerrar'),
-                                ),
-                              ],
                             ),
                           );
                         }
@@ -831,12 +961,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ])
           ),
         ),
-      ),
-    );
+      );
   }
-
-
 }

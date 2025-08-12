@@ -12,7 +12,11 @@ class ProductoService {
           id, 
           nombre, 
           precio_venta,
-          stock
+          precio_compra_unidad,
+          stock,
+          iva_19,
+          iva_30,
+          codigo_barras
         ''')
         .order('nombre', ascending: true);
 
@@ -20,8 +24,13 @@ class ProductoService {
       return Producto(
         id: map['id'].toString(),
         nombre: map['nombre'] as String,
-        precio: map['precio_venta'] is double ? map['precio_venta'] : 
+        precioCompraUnidad: map['precio_compra_unidad'] is double ? map['precio_compra_unidad'] : 
+               (map['precio_compra_unidad'] as num).toDouble(),
+        precioVenta: map['precio_venta'] is double ? map['precio_venta'] : 
                (map['precio_venta'] as num).toDouble(),
+        iva19: (map['iva_19'] as num?)?.toDouble() ?? 0.0,
+        iva30: (map['iva_30'] as num?)?.toDouble() ?? 0.0,
+        codigoBarras: map['codigo_barras']?.toString(),
         stock: map['stock'] as int,
       );
     }).toList();

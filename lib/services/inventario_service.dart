@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/inventario.dart';
+import '../models/producto.dart';
 
 class InventarioService {
   final _supabase = Supabase.instance.client;
@@ -48,6 +49,36 @@ class InventarioService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  // Buscar producto por código de barras
+  Future<Producto?> buscarProductoPorCodigo(String codigoBarras) async {
+    try {
+      final response = await _supabase
+          .from('productos')
+          .select()
+          .eq('codigo_barras', codigoBarras)
+          .maybeSingle();
+
+      return response != null ? Producto.fromJson(response) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Buscar productos por nombre
+  Future<List<Producto>> buscarProductos(String query) async {
+    try {
+      final response = await _supabase
+          .from('productos')
+          .select()
+          .ilike('nombre', '%$query%')
+          .limit(10);
+
+      return (response as List).map((json) => Producto.fromJson(json)).toList();
+    } catch (e) {
+      return [];
     }
   }
 }

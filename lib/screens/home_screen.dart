@@ -1,3 +1,4 @@
+import 'package:Invoky/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'inventario_screen.dart';
 import 'ventas_screen.dart';
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case MenuOption.reportes:
         return const ReportesScreen();
       case MenuOption.inicio:
-      return const SizedBox.shrink(); // Vista en blanco
+        return const DashboardScreen(); // Vista en blanco
     }
   }
 
